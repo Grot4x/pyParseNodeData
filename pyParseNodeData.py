@@ -35,7 +35,7 @@ def parseData(data):
         node['tags']['name'] = str(entry['name'])
         node['time'] = timestamp
         node['fields'] = {}
-        node['fields']['value'] = entry['status']['clients']
+        node['fields']['value'] = int(entry['status']['clients'])
         nodeList.append(node)
     return nodeList
 
