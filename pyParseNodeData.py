@@ -1,21 +1,15 @@
 #!/usr/bin/env python3
 import requests
-import pickle
-import socket
-import os
 import json
+import time
+from influxdb import InfluxDBClient
 
 MAPURL = 'https://map.stormarn.freifunk.net/data/nodelist.json'
-HOST = '0.0.0.0'
+HOST = '127.0.0.1'
 PORT = '2004'
 NEW = True
-
-
-def packMessage():
-    payload = pickle.dumps(listOfMetricTuples, protocol=2)
-    header = struct.pack("!L", len(payload))
-    message = header + payload
-    return message
+USER = 'python'
+PASSWORD = ''
 
 
 def getData(url):
@@ -30,14 +24,28 @@ def getData(url):
 
 
 def parseData(data):
+    nodeList = []
+    timestamp = int(time.time())
+
     for entry in data['nodes']:
-        pass
+        node = {}
+        node['measurement'] = "client_count"
+        node['tags'] = {}
+        node['tags']['id'] = str(entry['id'])
+        node['tags']['name'] = str(entry['name'])
+        node['time'] = timestamp
+        node['fields'] = {}
+        node['fields']['value'] = str(entry['status']['clients'])
+        nodeList.append(node)
+    return nodeList
 
 
 def sendMessage(data):
-    connection = socket.create_connection((HOST, PORT))
-    connection.send(data)
-    connection.close()
+    client = InfluxDBClient('localhost', 8086, USER, PASSWORD, 'freifunk')
+    # Optional
+    # client.create_database('freifunk')
+    client.write_points(data, 's')
+    return "ok"  # "Result: {0}".format(result)
 
 
 def main():
@@ -45,15 +53,14 @@ def main():
         print('Loading new file')
         data = getData(MAPURL)
         if data != "error":
-            parseData(data)
+            print(sendMessage(parseData(data)))
         else:
             print("error")
     else:
         print('Using old file')
         with open('nodes.json', 'r') as infile:
             data = json.load(infile)
-        parseData(data)
-        return data
+            print(sendMessage(parseData(data)))
 
 
 if __name__ == '__main__':
