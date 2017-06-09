@@ -7,18 +7,31 @@ from influxdb import InfluxDBClient
 MAPURL = 'https://map.stormarn.freifunk.net/data/nodelist.json'
 HOST = '127.0.0.1'
 PORT = '2004'
-NEW = True
+NEW = False
 USER = 'python'
 PASSWORD = ''
 
+def checkData(data):
+    toplevel = data.keys()
+    for key in ['version', 'nodes', 'updated_at']:
+        if key not in toplevel:
+            print("Missing key " + key)
+            return False
+    return True
 
 def getData(url):
     r = requests.get(url)
     if r.status_code == 200:
         data = r.json()
         with open('nodes.json', 'w') as outfile:
-            json.dump(data, outfile)
-        return data
+            try:
+                json.dump(data, outfile)
+                if(checkData(data)):
+                    return data
+                else:
+                    return "error"
+            except ValueError:
+                return "error"
     else:
         return "error"
 
@@ -60,8 +73,11 @@ def main():
         print('Using old file')
         with open('nodes.json', 'r') as infile:
             data = json.load(infile)
-            print(sendMessage(parseData(data)))
-
+            if(checkData(data)):
+                #print(sendMessage(parseData(data)))
+                print("ok")
+            else:
+                print("error")
 
 if __name__ == '__main__':
     main()
