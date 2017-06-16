@@ -10,6 +10,7 @@ PORT = '2004'
 NEW = False
 USER = 'python'
 PASSWORD = ''
+CALC-SUM = True
 
 def checkData(data):
     toplevel = data.keys()
@@ -39,7 +40,7 @@ def getData(url):
 def parseData(data):
     nodeList = []
     timestamp = int(time.time())
-
+    clientsum = 0
     for entry in data['nodes']:
         node = {}
         node['measurement'] = "client_count"
@@ -50,6 +51,13 @@ def parseData(data):
         node['fields'] = {}
         node['fields']['value'] = int(entry['status']['clients'])
         nodeList.append(node)
+        if CLIENT-SUM:
+            clientsum += int(entry['status']['clients'])
+    if CLIENT-SUM:
+        csum = {}
+        csum['measurement'] = "client_sum"
+        csum['time'] = timestamp
+        nodeList.append(csum)
     return nodeList
 
 
