@@ -12,6 +12,9 @@ USER = 'python'
 PASSWORD = ''
 CALC-SUM = True
 
+"""
+    Check if Data is in a healthy state
+"""
 def checkData(data):
     toplevel = data.keys()
     for key in ['version', 'nodes', 'updated_at']:
@@ -20,6 +23,9 @@ def checkData(data):
             return False
     return True
 
+"""
+    Loading the json file from the webserver
+"""
 def getData(url):
     r = requests.get(url)
     if r.status_code == 200:
@@ -35,10 +41,11 @@ def getData(url):
                 return "error"
     else:
         return "error"
-
-
+"""
+    Parsing the json and extracting some metrics
+"""
 def parseData(data):
-    nodeList = []
+    dataList = []
     timestamp = int(time.time())
     clientsum = 0
     for entry in data['nodes']:
@@ -50,17 +57,20 @@ def parseData(data):
         node['time'] = timestamp
         node['fields'] = {}
         node['fields']['value'] = int(entry['status']['clients'])
-        nodeList.append(node)
+        dataList.append(node)
         if CLIENT-SUM:
             clientsum += int(entry['status']['clients'])
+    # Was to expensive to calc at db level
     if CLIENT-SUM:
         csum = {}
         csum['measurement'] = "client_sum"
         csum['time'] = timestamp
-        nodeList.append(csum)
+        dataList.append(csum)
     return nodeList
 
-
+"""
+    Send the data points to the influxdb
+"""
 def sendMessage(data):
     client = InfluxDBClient('localhost', 8086, USER, PASSWORD, 'freifunk')
     # Optional
@@ -70,6 +80,7 @@ def sendMessage(data):
 
 
 def main():
+    # When new file is needed
     if(NEW):
         print('Loading new file')
         data = getData(MAPURL)
@@ -82,8 +93,7 @@ def main():
         with open('nodes.json', 'r') as infile:
             data = json.load(infile)
             if(checkData(data)):
-                #print(sendMessage(parseData(data)))
-                print("ok")
+                print(sendMessage(parseData(data)))
             else:
                 print("error")
 
