@@ -14,6 +14,7 @@ CONFIG['NEW'] = False
 CONFIG['USER'] = 'python'
 CONFIG['PASSWORD'] = ''
 CONFIG['CLIENTSUM'] = True
+CONFIGPATH = '/config.json'
 
 
 def checkData(data):
@@ -101,8 +102,7 @@ def main():
             f.write(json.dumps(CONFIG, indent=4))
             sys.exit()
     try:
-        filename = os.getcwd()+'/config.json'
-        configFile = open(filename, 'r')
+        configFile = open(CONFIGPATH, 'r')
         config = json.load(configFile)
         CONFIG['MAPURL'] = str(config['MAPURL'])
         CONFIG['HOST'] = str(config['HOST'])
