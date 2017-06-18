@@ -75,7 +75,7 @@ def parseData(data):
         csum['measurement'] = "client_sum"
         csum['time'] = timestamp
         csum['fields'] = {}
-        node['fields']['value'] = clientsum
+        csum['fields']['value'] = clientsum
         dataList.append(csum)
     return dataList
 
