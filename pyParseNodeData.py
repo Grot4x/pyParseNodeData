@@ -12,10 +12,11 @@ USER = 'python'
 PASSWORD = ''
 CALC-SUM = True
 
-"""
-    Check if Data is in a healthy state
-"""
+
 def checkData(data):
+    """
+        Check if Data is in a healthy state
+    """
     toplevel = data.keys()
     for key in ['version', 'nodes', 'updated_at']:
         if key not in toplevel:
@@ -23,10 +24,11 @@ def checkData(data):
             return False
     return True
 
-"""
-    Loading the json file from the webserver
-"""
+
 def getData(url):
+    """
+        Loading the json file from the webserver
+    """
     r = requests.get(url)
     if r.status_code == 200:
         data = r.json()
@@ -41,10 +43,12 @@ def getData(url):
                 return "error"
     else:
         return "error"
-"""
-    Parsing the json and extracting some metrics
-"""
+
+
 def parseData(data):
+    """
+        Parsing the json and extracting some metrics
+    """
     dataList = []
     timestamp = int(time.time())
     clientsum = 0
@@ -68,10 +72,11 @@ def parseData(data):
         dataList.append(csum)
     return nodeList
 
-"""
-    Send the data points to the influxdb
-"""
+
 def sendMessage(data):
+    """
+        Send the data points to the influxdb
+    """
     client = InfluxDBClient('localhost', 8086, USER, PASSWORD, 'freifunk')
     # Optional
     # client.create_database('freifunk')
@@ -96,6 +101,7 @@ def main():
                 print(sendMessage(parseData(data)))
             else:
                 print("error")
+
 
 if __name__ == '__main__':
     main()
