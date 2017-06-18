@@ -1,0 +1,9 @@
+{
+    "MAPURL": "https://map.stormarn.freifunk.net/data/nodelist.json",
+    "NEW": false,
+    "CLIENTSUM": true,
+    "PASSWORD": "",
+    "USER": "python",
+    "HOST": "127.0.0.1",
+    "PORT": 8086
+}

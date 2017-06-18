@@ -2,27 +2,32 @@
 import requests
 import json
 import time
+import sys
 from influxdb import InfluxDBClient
 
-MAPURL = 'https://map.stormarn.freifunk.net/data/nodelist.json'
-HOST = '127.0.0.1'
-PORT = '2004'
-NEW = False
-USER = 'python'
-PASSWORD = ''
-CALC-SUM = True
+CONFIG = {}
+CONFIG['MAPURL'] = 'https://map.stormarn.freifunk.net/data/nodelist.json'
+CONFIG['HOST'] = '127.0.0.1'
+CONFIG['PORT'] = 8086
+CONFIG['NEW'] = False
+CONFIG['USER'] = 'python'
+CONFIG['PASSWORD'] = ''
+CONFIG['CLIENTSUM'] = True
 
 
 def checkData(data):
     """
         Check if Data is in a healthy state
     """
-    toplevel = data.keys()
-    for key in ['version', 'nodes', 'updated_at']:
-        if key not in toplevel:
-            print("Missing key " + key)
-            return False
-    return True
+    try:
+        toplevel = data.keys()
+        for key in ['version', 'nodes', 'updated_at']:
+            if key not in toplevel:
+                print("Missing key " + key)
+                return False
+        return True
+    except KeyError as e:
+        print("Error checking the data " + str(e))
 
 
 def getData(url):
@@ -62,22 +67,24 @@ def parseData(data):
         node['fields'] = {}
         node['fields']['value'] = int(entry['status']['clients'])
         dataList.append(node)
-        if CLIENT-SUM:
+        if CONFIG['CLIENTSUM']:
             clientsum += int(entry['status']['clients'])
     # Was to expensive to calc at db level
-    if CLIENT-SUM:
+    if CONFIG['CLIENTSUM']:
         csum = {}
         csum['measurement'] = "client_sum"
         csum['time'] = timestamp
+        csum['fields'] = {}
+        node['fields']['value'] = clientsum
         dataList.append(csum)
-    return nodeList
+    return dataList
 
 
 def sendMessage(data):
     """
         Send the data points to the influxdb
     """
-    client = InfluxDBClient('localhost', 8086, USER, PASSWORD, 'freifunk')
+    client = InfluxDBClient(CONFIG['HOST'], CONFIG['PORT'], CONFIG['USER'], CONFIG['PASSWORD'], 'freifunk')
     # Optional
     # client.create_database('freifunk')
     client.write_points(data, 's')
@@ -85,10 +92,36 @@ def sendMessage(data):
 
 
 def main():
+    global CONFIG
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "dev":
+            # Developer mode
+            f = open("config.json.example", 'w')
+            f.write(json.dumps(CONFIG, indent=4))
+            sys.exit()
+    try:
+        configFile = open('config.json', 'r')
+        config = json.load(configFile)
+        CONFIG['MAPURL'] = str(config['MAPURL'])
+        CONFIG['HOST'] = str(config['HOST'])
+        CONFIG['PORT'] = int(config['PORT'])
+        CONFIG['NEW'] = bool(config['NEW'])
+        CONFIG['USER'] = str(config['USER'])
+        CONFIG['PASSWORD'] = str(config['PASSWORD'])
+        CONFIG['CLIENTSUM'] = bool(config['CLIENTSUM'])
+    except ValueError as e:
+        print("No config was found.")
+        sys.exit()
+    except KeyError as e:
+        print("Setting not found: " + str(e))
+        sys.exit()
+    except FileNotFoundError as e:
+        print("No config was found.")
+        sys.exit()
     # When new file is needed
-    if(NEW):
+    if(CONFIG['NEW']):
         print('Loading new file')
-        data = getData(MAPURL)
+        data = getData(CONFIG['MAPURL'])
         if data != "error":
             print(sendMessage(parseData(data)))
         else:
