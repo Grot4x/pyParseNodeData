@@ -3,6 +3,7 @@ import requests
 import json
 import time
 import sys
+import os
 from influxdb import InfluxDBClient
 
 CONFIG = {}
@@ -100,7 +101,8 @@ def main():
             f.write(json.dumps(CONFIG, indent=4))
             sys.exit()
     try:
-        configFile = open('config.json', 'r')
+        filename = os.getcwd()+'/config.json'
+        configFile = open(filename, 'r')
         config = json.load(configFile)
         CONFIG['MAPURL'] = str(config['MAPURL'])
         CONFIG['HOST'] = str(config['HOST'])
@@ -110,13 +112,13 @@ def main():
         CONFIG['PASSWORD'] = str(config['PASSWORD'])
         CONFIG['CLIENTSUM'] = bool(config['CLIENTSUM'])
     except ValueError as e:
-        print("No config was found.")
+        print("No config was found." + filename)
         sys.exit()
     except KeyError as e:
         print("Setting not found: " + str(e))
         sys.exit()
     except FileNotFoundError as e:
-        print("No config was found.")
+        print("No config was found: " + filename)
         sys.exit()
     # When new file is needed
     if(CONFIG['NEW']):
